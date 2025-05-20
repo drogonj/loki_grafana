@@ -15,12 +15,12 @@ This project provides a secure, containerized observability stack using **Loki**
 - **Automated Certificate Generation**: Self-signed CA and per-service certificates generated on container startup.
 - **Secure Secret Sharing**: Grafana retrieves credentials from Vault using a read-only token, never exposing secrets in images or environment variables.
 
-
 1. **Access the services:**
 
    - **Grafana**: [http://localhost:3000](http://localhost:3000)
    - **Vault UI**: [https://localhost:8201](https://localhost:8201) (self-signed cert, ignore browser warning)
    - **Loki**: [http://localhost:3100](http://localhost:3100)
+   - **Django** (useless): [http://localhost:8000](http://localhost:8000)
 
 ---
 
