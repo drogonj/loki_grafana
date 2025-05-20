@@ -1,105 +1,29 @@
-**Status:** In progress...
+### Status: In progress...
 
-# Loki, Grafana, and Django Logging Stack
+# Loki + Grafana + Vault Secure Stack
 
-A simple setup to collect, store, and visualize Docker logs using Loki, Grafana, and Promtail, with a Django backend emitting structured logs.
+This project provides a secure, containerized observability stack using **Loki** for log aggregation, **Grafana** for visualization, and **HashiCorp Vault** for secrets management. All services are orchestrated with Docker Compose and communicate over TLS with certificates generated at runtime.
 
-## Features
+---
 
-- **Grafana** for dashboards and log visualization
-- **Loki** for log aggregation and storage
-- **Promtail** for collecting Docker container logs
-- **Django backend** with logs formatted for Loki/Grafana
-- **Docker Compose** for easy orchestration
-- **Vagrant** for VM-based deployment **if Docker is not available on your host / if your user is not allowed to read docker.sock**
+## Stack
 
-## Architecture
+- **Loki**: Log aggregation and storage.
+- **Grafana**: Visualization and dashboards, with secrets (like admin/user passwords) securely fetched from Vault at startup.
+- **Vault (Raft HA)**: Secure storage and distribution of secrets, with TLS enabled and automatic initialization/unsealing.
+- **Promtail**: Log shipping from Docker containers to Loki.
+- **Automated Certificate Generation**: Self-signed CA and per-service certificates generated on container startup.
+- **Secure Secret Sharing**: Grafana retrieves credentials from Vault using a read-only token, never exposing secrets in images or environment variables.
 
-```
-+----------------+      +----------------+      +----------------+
-|   Django App   | ---> |    Promtail    | ---> |      Loki      |
-| (Dockerized)   |      | (Dockerized)   |      |  (Dockerized)  |
-+----------------+      +----------------+      +----------------+
-        |                                                    |
-        +--------------------> Grafana <---------------------+
-                          (Dashboards & Log Queries)
-```
 
-## Getting Started
+1. **Access the services:**
 
-### Prerequisites
+   - **Grafana**: [http://localhost:3000](http://localhost:3000)
+   - **Vault UI**: [https://localhost:8201](https://localhost:8201) (self-signed cert, ignore browser warning)
+   - **Loki**: [http://localhost:3100](http://localhost:3100)
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [Vagrant](https://www.vagrantup.com/) (optional, for VM deployment)
-- [VirtualBox](https://www.virtualbox.org/) (if using Vagrant)
+---
 
-### Usage
+Include a Vagrantfile to deploy a VM locally and start the project
 
-#### Local Docker Deployment
-
-1. **Start the stack:**
-   ```sh
-   make up
-   ```
-2. **Stop the stack:**
-   ```sh
-   make down
-   ```
-3. **Clean up resources:**
-   ```sh
-   make clean
-   ```
-
-#### VM Deployment (if you can't access Docker on your host)
-
-1. **Start the VM and stack:**
-
-   ```sh
-   vagrant up
-   ```
-
-   - The VM will be accessible at `192.168.56.110`.
-   - Grafana: [http://192.168.56.110:3000](http://192.168.56.110:3000)
-   - Django: [http://192.168.56.110:8000](http://192.168.56.110:8000)
-2. **SSH into the VM:**
-
-   ```sh
-   vagrant ssh <your_username>VM
-   ```
-3. **Destroy the VM:**
-
-   ```sh
-   vagrant destroy
-   ```
-
-#### Shared Folders
-
-- The project folder is shared between your host and the VM at `/vagrant`.
-
-## Project Structure
-
-- `backend/` - Django application (logs to stdout in Loki-compatible format)
-- `grafana/` - Grafana provisioning (dashboards, datasources)
-- `loki/` - Loki configuration
-- `promtail/` - Promtail configuration for Docker log scraping
-- `docker-compose.yaml` - Orchestration for all services
-- `Vagrantfile`, `VMSetup.sh` - VM provisioning scripts
-
-## Logging
-
-- Django logs are structured for Loki/Grafana and sent to stdout.
-- Promtail collects logs from all Docker containers and forwards them to Loki.
-- Grafana dashboards are pre-provisioned for log exploration.
-
-## Credentials
-
-- **Grafana default login:**
-  - Username: `admin`
-  - Password: `admin` (unless changed)
-
-## References
-
-- [Grafana Loki Documentation](https://grafana.com/docs/loki/latest/)
-- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
-- [Django Documentation](https://docs.djangoproject.com/)
+1. IP: 192.168.56.110

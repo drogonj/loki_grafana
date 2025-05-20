@@ -12,4 +12,9 @@ clean: down
 	docker volume prune -af
 	docker network prune -f
 
+logs:
+	docker compose logs -f
+
 re: clean up
+
+.PHONY: all up down clean logs re

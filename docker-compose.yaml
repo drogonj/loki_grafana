@@ -14,29 +14,31 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - monitoring
+      - monitoring-internal
+      - vault-external
     volumes:
+      - vault-grafana-token:/vault/token/grafana:ro
+      - vault-ssl:/vault/ssl:ro
       - grafana_data:/var/lib/grafana
     environment:
-      - GF_ALERTING_ENABLED=false
       - GF_SERVER_ROOT_URL=http://localhost:3000
-      - GF_LOG_LEVEL=debug
+      - GF_LOG_LEVEL=debug # TODO: Change to info in production
       - GF_PLUGINS_PREINSTALL=grafana-clock-panel, grafana-simple-json-datasource
+      - VAULT_NODES=vault_2 vault_1 vault_3
     depends_on:
       loki:
         condition: service_healthy
+    entrypoint: ["/tmp/users_setup.sh"]
     restart: unless-stopped
 
   loki:
     container_name: loki
     build: loki
-    ports:
-      - "3100:3100"
     volumes:
       - loki_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - monitoring
+      - monitoring-internal
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 3100 || exit 1"]
       interval: 5s
@@ -53,16 +55,87 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: -config.file=/etc/promtail/config.yml
     networks:
-      - monitoring
+      - monitoring-internal
     depends_on:
       loki:
         condition: service_healthy
     restart: unless-stopped
 
+  vault-1:
+    container_name: vault_1
+    build: vault-1
+    volumes:
+    - vault-token:/vault/token/
+    - vault-grafana-token:/vault/token/grafana
+    - vault-ssl:/vault/ssl
+    - vault-data-1:/vault/data
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8201:8200" #TODO: Delete in production
+    expose:
+      - "8200"
+    networks:
+      - vault-internal
+      - vault-external
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  vault-2:
+    container_name: vault_2
+    build: vault-2
+    volumes:
+    - vault-token:/vault/token/
+    - vault-grafana-token:/vault/token/grafana
+    - vault-ssl:/vault/ssl
+    - vault-data-2:/vault/data
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8202:8200" #TODO: Delete in production
+    expose:
+      - "8200"
+    networks:
+      - vault-internal
+      - vault-external
+    restart: unless-stopped
+
+  vault-3:
+    container_name: vault_3
+    build: vault-3
+    volumes:
+    - vault-token:/vault/token/
+    - vault-grafana-token:/vault/token/grafana
+    - vault-ssl:/vault/ssl
+    - vault-data-3:/vault/data
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8203:8200" #TODO: Delete in production
+    expose:
+      - "8200"
+    networks:
+      - vault-internal
+      - vault-external
+    restart: unless-stopped
+    
 networks:
   backend:
-  monitoring:
+    driver: bridge
+  monitoring-internal:
+    driver: bridge
+  vault-internal:
+    driver: bridge
+  vault-external:
+    driver: bridge
 
 volumes:
   grafana_data:
   loki_data:
+  vault-token:
+  vault-grafana-token:
+  vault-ssl:
+  vault-data-1:
+  vault-data-2:
+  vault-data-3:
